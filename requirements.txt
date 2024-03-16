@@ -1,0 +1,7 @@
+pyrogram
+tgcrypto
+requests
+python-dotenv
+google-generativeai
+ipython
+pillow
