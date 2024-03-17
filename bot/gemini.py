@@ -27,12 +27,17 @@ def to_markdown(text):
 
 @Client.on_message(filters.command(["ai", "genai", "aitext", "gemini", "bard"]))
 async def gemini_ai(_, message):
-    
-    genai.configure(api_key=GEMINI_API)
+
+    # authorising
+    if not auth(message.from_user.id):
+        return
     
     if (message.reply_to_message) and (message.reply_to_message.photo):
         await gemini_ai_img(_, message)
     else:
+        # To avoid command only
+        if (" " not in message.text):
+            return
         await gemini_ai_text(_, message)
 
 
@@ -46,13 +51,10 @@ async def gemini_ai_private(_, message):
     if not auth(message.from_user.id):
         return
     
-    genai.configure(api_key=GEMINI_API)
-    
     if (message.reply_to_message) and (message.reply_to_message.photo):
         await gemini_ai_img(_, message)
     else:
         await gemini_ai_text(_, message, text=message.text)
-        
 
 
 @Client.on_message(filters.command(["genaitext", "aitext", "geminitext", "textai"]))
@@ -65,7 +67,6 @@ async def gemini_ai_text(_, message, text=""):
     # To avoid command only messages
     if message.text.startswith("/") and (" " not in message.text):
         return
-        
     
     m = await message.reply_text("Please wait...", quote=True)
     
