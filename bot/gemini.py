@@ -2,8 +2,8 @@ import os
 import pathlib
 import textwrap
 import PIL.Image
-from vars import GEMINI_API
-from .admin import auth
+from .database import db
+from .admin import auth, add_user
 from pyrogram import Client, filters
 import google.generativeai as genai
 from IPython.display import display
@@ -25,10 +25,37 @@ def to_markdown(text):
     return Markdown(textwrap.indent(text, '> ', predicate=lambda _: True))
 
 
+def check_api(api_key):
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel('gemini-pro')
+    try:
+        # for testing the API
+        response = model.generate_content('Hello')
+        return True
+    except:
+        return False
+
+
+async def no_api(message):
+    await message.reply_text(
+        text="You didn't set your API. Please set your API.",
+        reply_markup=BUTTONS,
+        quote=True
+    )
+    return
+
+
 @Client.on_message(filters.command(["ai", "genai", "aitext", "gemini", "bard"]))
 async def gemini_ai(_, message):
     
-    genai.configure(api_key=GEMINI_API)
+    # authorising
+    if not auth(message.from_user.id):
+        return
+    
+    api = await db.get_api(message.from_user.id)
+    if not api:
+        await no_api(message)
+    genai.configure(api_key=api)
     
     if (message.reply_to_message) and (message.reply_to_message.photo):
         await gemini_ai_img(_, message)
@@ -46,7 +73,10 @@ async def gemini_ai_private(_, message):
     if not auth(message.from_user.id):
         return
     
-    genai.configure(api_key=GEMINI_API)
+    api = await db.get_api(message.from_user.id)
+    if not api:
+        await no_api(message)
+    genai.configure(api_key=api)
     
     if (message.reply_to_message) and (message.reply_to_message.photo):
         await gemini_ai_img(_, message)
@@ -62,10 +92,12 @@ async def gemini_ai_text(_, message, text=""):
     if not auth(message.from_user.id):
         return
     
+    # adding user to database
+    await add_user(message)
+    
     # To avoid command only messages
     if message.text.startswith("/") and (" " not in message.text):
         return
-        
     
     m = await message.reply_text("Please wait...", quote=True)
     
@@ -76,8 +108,12 @@ async def gemini_ai_text(_, message, text=""):
             query = message.reply_to_message.text
         else:
             query = message.text.split(" ", 1)[1]
-
-    genai.configure(api_key=GEMINI_API)
+    
+    api = await db.get_api(message.from_user.id)
+    if not api:
+        await no_api(message)
+    genai.configure(api_key=api)
+    
     model = genai.GenerativeModel('gemini-pro')
     response = model.generate_content(query)
     
@@ -104,6 +140,9 @@ async def gemini_ai_text(_, message, text=""):
 @Client.on_message(filters.command(["aiimage", "genaiimage", "aiimg", "geminivision", "imgai"]))
 async def gemini_ai_img(_, message):
     
+    # adding user to database
+    await add_user(message)
+    
     # authorising
     if not auth(message.from_user.id):
         return
@@ -113,7 +152,10 @@ async def gemini_ai_img(_, message):
     image = await message.reply_to_message.download()
     img = PIL.Image.open(image)
     
-    genai.configure(api_key=GEMINI_API)
+    api = await db.get_api(message.from_user.id)
+    if not api:
+        await no_api(message)
+    genai.configure(api_key=api)
     model = genai.GenerativeModel('gemini-pro-vision')
     
     if (" " in message.text):
