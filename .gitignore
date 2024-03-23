@@ -4,5 +4,6 @@
 *.session-journal
 *.pyc
 *.env
-
+test.py
+**/tests
 **/downloads
