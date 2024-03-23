@@ -60,6 +60,9 @@ async def gemini_ai(_, message):
     if (message.reply_to_message) and (message.reply_to_message.photo):
         await gemini_ai_img(_, message)
     else:
+        # To avoid command only
+        if (" " not in message.text):
+            return
         await gemini_ai_text(_, message)
 
 
@@ -76,13 +79,12 @@ async def gemini_ai_private(_, message):
     api = await db.get_api(message.from_user.id)
     if not api:
         await no_api(message)
-    genai.configure(api_key=api)
     
+    genai.configure(api_key=api)
     if (message.reply_to_message) and (message.reply_to_message.photo):
         await gemini_ai_img(_, message)
     else:
         await gemini_ai_text(_, message, text=message.text)
-        
 
 
 @Client.on_message(filters.command(["genaitext", "aitext", "geminitext", "textai"]))
