@@ -42,7 +42,6 @@ async def no_api(message):
         reply_markup=BUTTONS,
         quote=True
     )
-    return
 
 
 @Client.on_message(filters.command(["ai", "genai", "aitext", "gemini", "bard"]))
@@ -55,6 +54,7 @@ async def gemini_ai(_, message):
     api = await db.get_api(message.from_user.id)
     if not api:
         await no_api(message)
+        return
     genai.configure(api_key=api)
     
     if (message.reply_to_message) and (message.reply_to_message.photo):
@@ -114,6 +114,7 @@ async def gemini_ai_text(_, message, text=""):
     api = await db.get_api(message.from_user.id)
     if not api:
         await no_api(message)
+        return
     genai.configure(api_key=api)
     
     model = genai.GenerativeModel('gemini-pro')
@@ -157,6 +158,7 @@ async def gemini_ai_img(_, message):
     api = await db.get_api(message.from_user.id)
     if not api:
         await no_api(message)
+        return
     genai.configure(api_key=api)
     model = genai.GenerativeModel('gemini-pro-vision')
     
