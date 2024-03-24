@@ -1,6 +1,6 @@
-from .admin import auth, add_user
 from .database import db
 from .gemini import check_api
+from .admin import auth, add_user
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -93,6 +93,24 @@ ABOUT_BUTTONS = InlineKeyboardMarkup(
 )
 
 
+@Client.on_message(filters.group & filters.command(["start", "help", "about"]))
+async def group_commands(bot, message):
+    
+    # authorising
+    if not auth(message.from_user.id):
+        return
+    
+    username = (await bot.get_me()).username
+    buttons = InlineKeyboardMarkup(
+        [[InlineKeyboardButton('Click here', url=f'https://telegram.me/{username}?start=help')]]
+    )
+    await message.reply_text(
+        text="You can use this command in private chat with me.",
+        reply_markup=buttons,
+        quote=True
+    )
+
+
 @Client.on_message(filters.private & filters.command(["start"]))
 async def start(bot, message, cb=False):
     
@@ -102,6 +120,11 @@ async def start(bot, message, cb=False):
     
     # adding user to database
     await add_user(message)
+    
+    if not cb:
+        if len(message.text.split()) > 1:
+            await help(bot, message)
+            return
     
     text=START_TEXT.format(message.from_user.mention)
     if cb:
@@ -196,7 +219,7 @@ async def add_api(bot, message):
         await m.edit_text("Invalid API Key")
 
 
-@Client.on_message(filters.private & filters.command(["my_api", "get_api"]))
+@Client.on_message(filters.private & filters.command(["my_api", "get_api", "show_api", "view_api"]))
 async def get_api(bot, message):
     
     # authorising

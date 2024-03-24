@@ -38,7 +38,7 @@ def check_api(api_key):
 
 async def no_api(message):
     await message.reply_text(
-        text="You didn't set your API. Please set your API.",
+        text="You didn't set your API. Please set your API.\n/help for more details.",
         reply_markup=BUTTONS,
         quote=True
     )
